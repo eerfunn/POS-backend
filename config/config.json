@@ -11,7 +11,7 @@
     "password": null,
     "database": "sik_test",
     "host": "127.0.0.1",
-    "dialect": "postgres",
+    "dialect": "mysql",
     "dialectOptions": {
       "ssl": {
         "require": true,
@@ -20,11 +20,11 @@
     }
   },
   "production": {
-    "username": "",
-    "password": "",
-    "database": "",
-    "host": "",
-    "dialect": "postgres",
+    "username": "root",
+    "password": "null",
+    "database": "sik_prod",
+    "host": "127.0.0.1",
+    "dialect": "mysql",
     "dialectOptions": {
       "ssl": {
         "require": true,

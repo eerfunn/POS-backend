@@ -1,13 +1,13 @@
-const { Users, Profiles } = require("../models");
+const { User, Profile } = require("../models");
 const bcrypt = require("bcrypt");
-const { checkToken, signToken } = require("../services/authService");
+const { checkToken, signToken } = require("../services/authServices");
 
 const getUsers = async (req, res) => {
   try {
-    const users = await Users.findAll({
+    const users = await User.findAll({
       attributes: ["id", "email", "role"],
       include: {
-        model: Profiles,
+        model: Profile,
         required: true,
         attributes: ["image", "name", "address", "no_hp"],
       },
@@ -30,10 +30,10 @@ const getUsers = async (req, res) => {
 const getUserById = async (req, res) => {
   const userId = req.params.id;
   try {
-    const users = await Users.findOne({
+    const users = await User.findOne({
       attributes: ["id", "email", "role"],
       include: {
-        model: Profiles,
+        model: Profile,
         required: true,
         attributes: ["image", "name", "address", "no_hp"],
       },
@@ -68,6 +68,7 @@ const getUserById = async (req, res) => {
 const register = async (req, res) => {
   const role = "owner";
   const { name, email, password } = req.body;
+  console.log(req.body);
   if (!name || !email || !password || !role) {
     res.status(400);
     return res.json({ status: 400, message: "Data cannot be empty!" });
@@ -75,7 +76,7 @@ const register = async (req, res) => {
   const salt = await bcrypt.genSalt();
   const hashPassword = await bcrypt.hash(password, salt);
   try {
-    const isEmailRegistered = await Users.findOne({
+    const isEmailRegistered = await User.findOne({
       where: {
         email: email,
       },
@@ -87,12 +88,12 @@ const register = async (req, res) => {
         message: "Email already exist!",
       });
     }
-    const user = await Users.create({
+    const user = await User.create({
       email: email,
       password: hashPassword,
       role: role,
     });
-    await Profiles.create({
+    await Profile.create({
       UserId: user.id,
       name: name,
     });
@@ -114,7 +115,7 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
   try {
-    const user = await Users.findOne({
+    const user = await User.findOne({
       where: {
         email: req.body.email,
       },
@@ -167,8 +168,9 @@ const logout = async (req, res) => {
 
     res.clearCookie("accessToken");
     res.clearCookie("refreshToken");
-    req.logout();
+    delete req.user;
     res.status(200);
+    console.log("Logout Succeed, data: " + req.user);
     return res.json({
       statusCode: 200,
       success: true,
@@ -186,6 +188,7 @@ const logout = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   const { name, address, no_hp } = req.body;
+  console.log(req.body);
   const image = req.body.file;
   try {
     if (!req.user.userId) {
@@ -203,7 +206,7 @@ const updateProfile = async (req, res) => {
       });
     }
 
-    await Profiles.update(
+    await Profile.update(
       { image, name, address, no_hp },
       {
         where: {
@@ -211,7 +214,7 @@ const updateProfile = async (req, res) => {
         },
       }
     );
-    const afterUpdate = await Profiles.findOne({
+    const afterUpdate = await Profile.findOne({
       attributes: ["image", "name", "address", "no_hp"],
       where: {
         UserId: req.user.userId,
@@ -244,7 +247,7 @@ const updateRole = async (req, res) => {
       res.status(403);
       return res.json({ status: 403, message: "Please login first!" });
     }
-    await Users.update(
+    await User.update(
       { role },
       {
         where: {
@@ -252,7 +255,7 @@ const updateRole = async (req, res) => {
         },
       }
     );
-    const updatedRole = await Users.findOne({
+    const updatedRole = await User.findOne({
       where: { UserId: req.user.userId },
     });
     res.status(200);
