@@ -1,4 +1,4 @@
-const { Toko, Products, Users } = require("../models");
+const { Toko, Product, User } = require("../models");
 
 const getAllToko = async (req, res) => {
   try {
