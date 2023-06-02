@@ -3,7 +3,17 @@ const { Products, Profiles, Categories, Wishlist, Toko } = require("../models");
 const getAllProduct = async (req, res) => {
   try {
     const products = await Products.findAll({
-      attributes: ["tokoName", "kd", "image", "name", "price", "CategoryId"],
+      attributes: [
+        "tokoName",
+        "id",
+        "image",
+        "name",
+        "price",
+        "g_price",
+        "stock",
+        "description",
+        "barcode",
+      ],
     });
     res.status(200).json({
       message: "Success get all products",
@@ -90,6 +100,7 @@ const createProduct = async (req, res) => {
         message: "Success create product",
         statusCode: 201,
       });
+      d;
     }
   } catch (error) {
     res.json({

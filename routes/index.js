@@ -10,6 +10,17 @@ const {
   updateRole,
 } = require("../controllers/UserController");
 
+const {
+  getAllToko,
+  getTokoById,
+  getTokoOwner,
+  getOwnedToko,
+  createToko,
+  updateToko,
+  deleteToko,
+  getProfileByRequest,
+} = require("../controllers/TokoController");
+
 const { authorize } = require("../middleware/authorize");
 const { verifyToken } = require("../middleware/verifyToken");
 const { signToken, verifyRole } = require("../services/authServices");
@@ -72,5 +83,18 @@ router.get("/auth/google/googleAccessToken", (req, res) => {
   verifyRole(req, res);
 });
 router.put("/profile/role", verifyToken, updateRole);
+
+router.get("/tokos", verifyToken, getAllToko);
+router.get("/toko/:id", verifyToken, getTokoById);
+router.get("/toko/:id/owner", verifyToken, getTokoOwner);
+router.get("/user/:id/tokos", verifyToken, getOwnedToko);
+
+router.post("/toko/create", [verifyToken, upload.single("image")], createToko);
+router.put(
+  "/toko/:id/update",
+  [verifyToken, upload.single("image")],
+  updateToko
+);
+router.delete("/toko/:id/delete", verifyToken, deleteToko);
 
 module.exports = router;

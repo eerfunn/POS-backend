@@ -12,7 +12,7 @@ module.exports = (sequelize, DataTypes) => {
       this.hasOne(models.Profile, {
         foreignKey: "UserId",
       });
-      this.hasMany(models.Toko, {
+      this.hasMany(models.Log, {
         foreignKey: "UserId",
       });
     }
