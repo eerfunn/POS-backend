@@ -104,9 +104,68 @@ const getTransactionsBasedOnDate = async (req, res) => {
     });
   }
 };
+
+const getTransaction = (req, res) => {
+  const TrId = req.params.id;
+  try {
+    const user = Profile.findOne({ where: { UserId: req.user.userId } });
+    const transaction = Transaction.findOne({ where: { id: TrId } });
+    if (user.activeToko != transaction.TokoId) {
+      res.status(401).json({
+        status: 401,
+        message: "Unauthorized",
+      });
+    } else {
+      res.status(200).json({
+        status: 200,
+        message: "Success get Transaction!",
+        data: transaction,
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      status: 500,
+      message: "Something went wrong!",
+      error: error.stack,
+    });
+  }
+};
+
+const createTransaction = async (req, res) => {
+  const { ProductId, notes, quantity, total } = req.body;
+  try {
+    const currProfile = await Profile.findOne({
+      where: { UserId: req.user.userId },
+    });
+    console.log("Req Body: ", req.body);
+    console.log("Profile Curr: ", currProfile);
+    const TokoId = currProfile.activeToko;
+    console.log("TOKO ID: " + TokoId);
+    const addTransaction = await Transaction.create({
+      TokoId,
+      ProductId,
+      notes,
+      quantity,
+      total,
+    });
+    console.log("Transaction Data: ", addTransaction);
+    res.status(201).json({
+      status: 201,
+      message: "Success Add Transaction",
+      data: addTransaction,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 500,
+      message: "Something went wrong!",
+      error: error.stack,
+    });
+  }
+};
 module.exports = {
   getAllTransactions,
   getAllTransactionsFromOwnedShop,
   getAllTransactionsFromActiveToko,
   getTransactionsBasedOnDate,
+  createTransaction,
 };

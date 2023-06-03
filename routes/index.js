@@ -43,6 +43,7 @@ const {
   getAllTransactionsFromOwnedShop,
   getAllTransactionsFromActiveToko,
   getTransactionsBasedOnDate,
+  createTransaction,
 } = require("../controllers/TransactionController");
 // handle storage using multer
 let storage = multer.diskStorage({
@@ -147,6 +148,11 @@ router.post(
   "/shop/transactions/report",
   [verifyToken, upload.single("image")],
   getTransactionsBasedOnDate
+);
+router.post(
+  "/shop/transactions/add",
+  [verifyToken, upload.single("image")],
+  createTransaction
 );
 
 module.exports = router;
