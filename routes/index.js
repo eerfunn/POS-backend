@@ -21,7 +21,7 @@ const {
   getProfileByRequest,
   chooseToko,
   checkChoosedToko,
-} = require("../controllers/TokoController");
+} = require("../controllers/ShopController");
 
 const { authorize } = require("../middleware/authorize");
 const { verifyToken } = require("../middleware/verifyToken");
@@ -37,7 +37,7 @@ const {
   getProductByCategory,
   getProductByToko,
   createProduct,
-} = require("../controllers/BarangController");
+} = require("../controllers/ProductController");
 // handle storage using multer
 let storage = multer.diskStorage({
   destination: function (req, file, cb) {
