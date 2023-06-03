@@ -19,6 +19,8 @@ const {
   updateToko,
   deleteToko,
   getProfileByRequest,
+  chooseToko,
+  checkChoosedToko,
 } = require("../controllers/TokoController");
 
 const { authorize } = require("../middleware/authorize");
@@ -29,6 +31,13 @@ const multer = require("multer");
 const path = require("path");
 const router = express.Router();
 const passport = require("passport");
+const {
+  getAllProducts,
+  getProduct,
+  getProductByCategory,
+  getProductByToko,
+  createProduct,
+} = require("../controllers/BarangController");
 // handle storage using multer
 let storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -84,6 +93,7 @@ router.get("/auth/google/googleAccessToken", (req, res) => {
 });
 router.put("/profile/role", verifyToken, updateRole);
 
+// Toko Routes
 router.get("/tokos", verifyToken, getAllToko);
 router.get("/toko/:id", verifyToken, getTokoById);
 router.get("/toko/:id/owner", verifyToken, getTokoOwner);
@@ -96,5 +106,32 @@ router.put(
   updateToko
 );
 router.delete("/toko/:id/delete", verifyToken, deleteToko);
+router.post(
+  "/toko/choose/:id",
+  [verifyToken, upload.single("image")],
+  chooseToko
+);
+router.get("/whattoko", verifyToken, checkChoosedToko);
+
+router.get("/products", verifyToken, getAllProducts);
+router.get("/product/:id", verifyToken, getProduct);
+router.get("/toko/:id/products", verifyToken, getProductByToko);
+router.get("/category/:id/products", verifyToken, getProductByCategory);
+
+router.post(
+  "/product/add",
+  [verifyToken, upload.single("image")],
+  createProduct
+);
+router.put(
+  "/product/:id/update",
+  [verifyToken, upload.single("image")],
+  createProduct
+);
+router.delete(
+  "/product/:id/delete",
+  [verifyToken, upload.single("image")],
+  createProduct
+);
 
 module.exports = router;

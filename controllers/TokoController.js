@@ -243,6 +243,79 @@ const deleteToko = async (req, res) => {
     });
   }
 };
+const chooseToko = async (req, res) => {
+  const activeToko = req.params.id;
+  try {
+    const listToko = await getTokoByRequest(activeToko);
+    // console.log(listToko);
+    if (listToko == null || req.user.userId != listToko.ProfileId) {
+      res.status(401).json({
+        status: 401,
+        message: "Unauthorized!",
+      });
+    } else {
+      console.log("The Choosed Toko Id is: " + activeToko);
+      const check = await Profile.update(
+        { activeToko },
+        {
+          where: {
+            UserId: req.user.userId,
+          },
+        }
+      );
+
+      res.status(200).json({
+        status: 200,
+        message: "Toko " + listToko.name + "is Choosed!",
+        data: check,
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      status: 500,
+      message: "Something went wrong!",
+      error: error.stack,
+    });
+  }
+};
+
+const tokoHasBeenChoosed = async (req, res) => {
+  console.log("The Choosed Toko Id has been Choosed: " + req.tokodata.id);
+  res.status(200).json({
+    status: 200,
+    message: "Toko " + req.tokodata.name + " is Choosed!",
+    data: req.tokodata,
+  });
+};
+
+const checkChoosedToko = (req, res) => {
+  console.log(req.tokoId);
+  const currentToko = req.tokoId;
+  if (currentToko == null) {
+    res.status(404).json({
+      status: 404,
+      message: "No Toko is choosed at the moment",
+    });
+  } else {
+    res.status(200).json({
+      status: 200,
+      message: "Current toko id is: " + currentToko,
+    });
+  }
+};
+const getTokoByRequest = (id) => {
+  try {
+    return Toko.findOne({
+      where: { id: id },
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 500,
+      message: "Something went wrong!",
+      error: error.stack,
+    });
+  }
+};
 const getProfileByRequest = (id) => {
   return Profile.findOne({
     where: {
@@ -252,6 +325,10 @@ const getProfileByRequest = (id) => {
 };
 
 module.exports = {
+  chooseToko,
+  checkChoosedToko,
+  getTokoByRequest,
+  tokoHasBeenChoosed,
   getAllToko,
   getTokoById,
   getTokoOwner,

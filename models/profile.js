@@ -19,6 +19,7 @@ module.exports = (sequelize, DataTypes) => {
       name: DataTypes.STRING,
       address: DataTypes.STRING,
       no_hp: DataTypes.STRING,
+      activeToko: DataTypes.INTEGER,
     },
     {
       sequelize,

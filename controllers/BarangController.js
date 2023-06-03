@@ -1,11 +1,12 @@
-const { Products, Profiles, Categories, Wishlist, Toko } = require("../models");
+const { Product, Profile, Category, Toko } = require("../models");
 
-const getAllProduct = async (req, res) => {
+const getAllProducts = async (req, res) => {
   try {
-    const products = await Products.findAll({
+    const products = await Product.findAll({
       attributes: [
-        "tokoName",
         "id",
+        "TokoId",
+        "CategoryId",
         "image",
         "name",
         "price",
@@ -14,6 +15,16 @@ const getAllProduct = async (req, res) => {
         "description",
         "barcode",
       ],
+      include: {
+        model: Toko,
+        required: true,
+        attributes: ["id", "name"],
+      },
+      include: {
+        model: Category,
+        required: true,
+        attributes: ["id", "name"],
+      },
     });
     res.status(200).json({
       message: "Success get all products",
@@ -21,8 +32,10 @@ const getAllProduct = async (req, res) => {
       data: products,
     });
   } catch (error) {
-    res.json({
-      message: error.message,
+    return res.json({
+      status: 500,
+      message: "Something went wrong!",
+      error: error.stack,
     });
   }
 };
@@ -30,11 +43,28 @@ const getAllProduct = async (req, res) => {
 const getProduct = async (req, res) => {
   const productId = req.params.id;
   try {
-    const product = await Products.findOne({
+    const product = await Product.findOne({
+      attributes: [
+        "id",
+        "TokoId",
+        "CategoryId",
+        "image",
+        "name",
+        "price",
+        "g_price",
+        "stock",
+        "description",
+        "barcode",
+      ],
       include: {
         model: Toko,
         required: true,
-        attributes: ["tokoId", "name", "city"],
+        attributes: ["id", "name"],
+      },
+      include: {
+        model: Category,
+        required: true,
+        attributes: ["id", "name"],
       },
       where: {
         id: productId,
@@ -46,91 +76,184 @@ const getProduct = async (req, res) => {
       data: product,
     });
   } catch (error) {
-    res.json({
-      message: error.message,
+    return res.json({
+      status: 500,
+      message: "Something went wrong!",
+      error: error.stack,
     });
   }
 };
 
-const getProductSeller = async (req, res) => {
-  const userId = req.id;
+const getProductByCategory = async (req, res) => {
+  const categoryId = req.params.id;
   try {
-    const profile = await getProfileByRequest(userId);
-    const product = await Products.findAll({
-      where: { ProfileId: profile.id },
+    const category = await Category.findOne({
+      attributes: ["id", "name"],
+      where: { id: categoryId },
     });
-    res.status(200).json({
-      message: "Success get seller product",
-      statusCode: 200,
-      data: product,
-    });
+    if (!category || category == "") {
+      res.status(404).json({
+        message: "Category does not exist",
+        statusCode: 404,
+      });
+    } else {
+      const product = await Product.findAll({
+        attributes: [
+          "id",
+          "TokoId",
+          "CategoryId",
+          "image",
+          "name",
+          "price",
+          "g_price",
+          "stock",
+          "description",
+          "barcode",
+        ],
+        where: { CategoryId: categoryId },
+      });
+      res.status(200).json({
+        message: "Success get product from Category " + category.name,
+        statusCode: 200,
+        data: product,
+      });
+    }
   } catch (error) {
-    res.json({
-      message: error.message,
+    return res.json({
+      status: 500,
+      message: "Something went wrong!",
+      error: error.stack,
+    });
+  }
+};
+
+const getProductByToko = async (req, res) => {
+  const tokoId = req.params.id;
+  try {
+    const toko = await Toko.findOne({
+      attributes: ["id", "name"],
+      where: { id: tokoId },
+    });
+    if (!toko || toko == "") {
+      res.status(404).json({
+        message: "Toko does not exist",
+        statusCode: 404,
+      });
+    } else {
+      const product = await Product.findAll({
+        attributes: [
+          "id",
+          "TokoId",
+          "CategoryId",
+          "image",
+          "name",
+          "price",
+          "g_price",
+          "stock",
+          "description",
+          "barcode",
+        ],
+        where: { TokoId: tokoId },
+      });
+
+      res.status(200).json({
+        message: "Success get product from Toko " + toko.name,
+        statusCode: 200,
+        data: product,
+      });
+    }
+  } catch (error) {
+    return res.json({
+      status: 500,
+      message: "Something went wrong!",
+      error: error.stack,
     });
   }
 };
 
 const createProduct = async (req, res) => {
-  const { name, description, CategoryId, price } = req.body;
-  const userId = req.id;
+  const { name, description, CategoryId, price, stock, g_price, barcode } =
+    req.body;
+  const userId = req.user.userId;
   const image = req.body.file;
-  console.log(userId);
   try {
     const profile = await getProfileByRequest(userId);
-    const ProfileId = profile.id;
-    const totalRecord = await Products.count({
-      where: { ProfileId: ProfileId },
+    const totalRecord = await Product.count({
+      where: { TokoId: profile.activeToko },
     });
-    if (totalRecord >= 4) {
+    console.log("count: ", totalRecord);
+    if (totalRecord >= 100) {
       res.status(400).json({
         statusCode: 400,
-        message: "Jumlah post produk maksimal 4",
+        message: "Satu toko hanya dapat memiliki maksimal 100 produk",
       });
     } else {
-      await Products.create({
-        ProfileId,
+      const TokoId = profile.activeToko;
+      const product = await Product.create({
+        TokoId,
         name,
         description,
         CategoryId,
         price,
         image,
+        stock,
+        g_price,
+        barcode,
       });
       res.status(201).json({
         message: "Success create product",
         statusCode: 201,
+        data: product,
       });
-      d;
     }
   } catch (error) {
-    res.json({
-      message: error.message,
+    return res.json({
+      status: 500,
+      message: "Something went wrong!",
+      error: error.stack,
     });
   }
 };
 
 const updateProduct = async (req, res) => {
   const productId = req.params.id;
-  const { name, description, CategoryId, price } = req.body;
+  const { name, description, CategoryId, price, stock, g_price, barcode } =
+    req.body;
   const image = req.body.file;
   try {
-    const product = await Products.findOne({
+    const product = await Product.findOne({
       where: { id: productId },
     });
-    await product.update({
-      name,
-      description,
-      CategoryId,
-      price,
-      image,
+    const currUser = await Profile.findOne({
+      where: { UserId: req.user.UserId },
     });
-    res.status(200).json({
-      message: "Success update product",
-      statusCode: 200,
-    });
+    if (!product || currUser.activeToko != product.TokoId) {
+      res.status(401).json({
+        message: "Cannot update product!",
+        statusCode: 401,
+      });
+    } else {
+      const updatedProduct = await Product.update({
+        name,
+        description,
+        CategoryId,
+        price,
+        image,
+        stock,
+        g_price,
+        barcode,
+      });
+      res.status(201).json({
+        message: "Success update product",
+        statusCode: 201,
+        data: updatedProduct,
+      });
+    }
   } catch (error) {
-    res.json({
-      message: error.message,
+    return res.json({
+      status: 500,
+      message: "Something went wrong!",
+      error: error.stack,
     });
   }
 };
@@ -138,127 +261,51 @@ const updateProduct = async (req, res) => {
 const deleteProduct = async (req, res) => {
   try {
     const productId = req.params.id;
-    await Products.destroy({
+    const product = await Product.findOne({
       where: { id: productId },
     });
-    res.status(204).end();
+    const currUser = await Profile.findOne({
+      where: { UserId: req.user.UserId },
+    });
+    if (!product || currUser.activeToko != product.TokoId) {
+      res.status(401).json({
+        status: 401,
+        message: "Unauthorized!",
+      });
+    } else {
+      await Product.destroy({
+        where: { id: productId },
+      });
+      res.status(204).end();
+    }
   } catch (error) {
-    res.json({
-      message: error.message,
+    return res.json({
+      status: 500,
+      message: "Something went wrong!",
+      error: error.stack,
     });
   }
 };
 
-const getListCategories = async (req, res) => {
+const getListCategory = async (req, res) => {
   try {
-    const category = await Categories.findAll();
+    const category = await Category.findAll();
     res.status(200).json({
-      message: "Success get all categories",
+      message: "Success get all Category",
       statusCode: 200,
       data: category,
     });
   } catch (error) {
-    res.json({
-      message: error.message,
-    });
-  }
-};
-
-const addWishlist = async (req, res) => {
-  const buyerId = req.id;
-  const productId = req.params.id;
-  try {
-    const seller = await Products.findOne({
-      where: {
-        id: productId,
-      },
-    });
-    const wishlist = await Wishlist.create({
-      BuyerId: buyerId,
-      ProductId: productId,
-      SellerId: seller.ProfileId,
-    });
-    res.status(200).json({
-      message: "Success add wishlist",
-      statusCode: 200,
-      data: wishlist,
-    });
-  } catch (error) {
-    res.json({
-      message: error.message,
-    });
-  }
-};
-
-const deleteWishlist = async (req, res) => {
-  const wishlistId = req.params.id;
-  try {
-    await Wishlist.destroy({
-      where: {
-        id: wishlistId,
-      },
-    });
-    res.status(200).json({
-      statusCode: 200,
-      message: "Success delete wishlist",
-    });
-  } catch (error) {
-    res.json({
-      message: error.message,
-    });
-  }
-};
-
-const getWishlist = async (req, res) => {
-  const buyerId = req.id;
-  try {
-    const wishlist = await Wishlist.findAll({
-      where: {
-        BuyerId: buyerId,
-      },
-      include: {
-        model: Products,
-        required: true,
-      },
-    });
-    res.status(200).json({
-      message: "Success get wishlist",
-      statusCode: 200,
-      data: wishlist,
-    });
-  } catch (error) {
-    res.json({
-      message: error.message,
-    });
-  }
-};
-
-const getWishlistedProduct = async (req, res) => {
-  const sellerId = req.id;
-  try {
-    const wishlist = await Wishlist.findAll({
-      include: {
-        model: Products,
-        required: true,
-      },
-      where: {
-        SellerId: sellerId,
-      },
-    });
-    res.status(200).json({
-      message: "Success get wishlisted product",
-      statusCode: 200,
-      data: wishlist,
-    });
-  } catch (error) {
-    res.json({
-      message: error.message,
+    return res.json({
+      status: 500,
+      message: "Something went wrong!",
+      error: error.stack,
     });
   }
 };
 
 const getProfileByRequest = (id) => {
-  return Profiles.findOne({
+  return Profile.findOne({
     where: {
       UserId: id,
     },
@@ -266,15 +313,12 @@ const getProfileByRequest = (id) => {
 };
 
 module.exports = {
-  getAllProduct,
+  getAllProducts,
   getProduct,
-  getProductSeller,
+  getProductByToko,
+  getProductByCategory,
   createProduct,
   updateProduct,
   deleteProduct,
-  getListCategories,
-  addWishlist,
-  deleteWishlist,
-  getWishlist,
-  getWishlistedProduct,
+  getListCategory,
 };
