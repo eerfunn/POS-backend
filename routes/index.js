@@ -38,6 +38,10 @@ const {
   getProductByToko,
   createProduct,
 } = require("../controllers/ProductController");
+const {
+  getAllTransactions,
+  getAllTransactionsFromOwnedShop,
+} = require("../controllers/TransactionController");
 // handle storage using multer
 let storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -134,4 +138,10 @@ router.delete(
   createProduct
 );
 
+router.get("/transactions", verifyToken, getAllTransactions);
+router.get(
+  "/shop/all/transactions",
+  verifyToken,
+  getAllTransactionsFromOwnedShop
+);
 module.exports = router;
