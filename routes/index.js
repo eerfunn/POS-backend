@@ -8,6 +8,7 @@ const {
   updateProfile,
   logout,
   updateRole,
+  getLogs,
 } = require("../controllers/UserController");
 
 const {
@@ -64,7 +65,7 @@ router.get("/users", verifyToken, getUsers);
 router.get("/user/:id", verifyToken, getUserById);
 router.post("/register", register);
 router.post("/login", login);
-router.post("/logout", logout);
+router.post("/logout", verifyToken, logout);
 
 //GET LOGOUT ONLY FOR LOGOUT WITHOUT FORM
 router.get("/logout", (req, res) => {
@@ -149,6 +150,8 @@ router.post(
   [verifyToken, upload.single("image")],
   getTransactionsBasedOnDate
 );
+
+router.get("/logs", verifyToken, getLogs);
 router.post(
   "/shop/transactions/add",
   [verifyToken, upload.single("image")],

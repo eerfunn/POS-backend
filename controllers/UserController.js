@@ -1,4 +1,4 @@
-const { User, Profile } = require("../models");
+const { User, Profile, Log } = require("../models");
 const bcrypt = require("bcrypt");
 const { checkToken, signToken } = require("../services/authServices");
 
@@ -11,6 +11,10 @@ const getUsers = async (req, res) => {
         required: true,
         attributes: ["image", "name", "address", "no_hp"],
       },
+    });
+    await Log.create({
+      UserId: req.user.userId,
+      desc: "User " + req.user.userId + " getting all user data",
     });
     res.status(200);
     return res.json({
@@ -40,6 +44,10 @@ const getUserById = async (req, res) => {
       where: {
         id: userId,
       },
+    });
+    await Log.create({
+      UserId: req.user.userId,
+      desc: "User " + req.user.userId + " user " + userId + " data",
     });
     if (!users) {
       res.status(404);
@@ -97,6 +105,10 @@ const register = async (req, res) => {
       UserId: user.id,
       name: name,
     });
+    await Log.create({
+      UserId: user.id,
+      desc: "User " + req.user.userId + " created",
+    });
     res.status(201);
     return res.json({
       message: "Register success!",
@@ -136,6 +148,10 @@ const login = async (req, res) => {
       });
     }
     req.user = { id: user.id, email: user.email, role: user.role };
+    await Log.create({
+      UserId: user.id,
+      desc: "User " + user.id + " Logged in",
+    });
     signToken(req, res);
   } catch (error) {
     res.status(500);
@@ -165,7 +181,10 @@ const logout = async (req, res) => {
     if (!refreshToken) {
       return res.sendStatus(204);
     }
-
+    await Log.create({
+      UserId: req.user.userId,
+      desc: "User " + req.user.userId + " logged out",
+    });
     res.clearCookie("accessToken");
     res.clearCookie("refreshToken");
     delete req.user;
@@ -214,6 +233,10 @@ const updateProfile = async (req, res) => {
         },
       }
     );
+    await Log.create({
+      UserId: req.user.userId,
+      desc: "User " + req.user.userId + " updated their profile",
+    });
     const afterUpdate = await Profile.findOne({
       attributes: ["image", "name", "address", "no_hp"],
       where: {
@@ -274,7 +297,23 @@ const updateRole = async (req, res) => {
   }
 };
 
+const getLogs = async (req, res) => {
+  const logs = await Log.findAll({
+    attributes: ["id", "UserId", "desc"],
+  });
+  await Log.create({
+    UserId: req.user.userId,
+    desc: "User " + req.user.userId + " viewing all user logs",
+  });
+  res.status(200).json({
+    status: 200,
+    message: "Data Found!",
+    data: logs,
+  });
+};
+
 module.exports = {
+  getLogs,
   getUsers,
   getUserById,
   register,

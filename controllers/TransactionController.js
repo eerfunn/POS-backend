@@ -132,7 +132,7 @@ const getTransaction = (req, res) => {
 };
 
 const createTransaction = async (req, res) => {
-  const { ProductId, notes, quantity, total } = req.body;
+  const { ProductId, customer, notes, quantity, total } = req.body;
   try {
     const currProfile = await Profile.findOne({
       where: { UserId: req.user.userId },
@@ -141,9 +141,11 @@ const createTransaction = async (req, res) => {
     console.log("Profile Curr: ", currProfile);
     const TokoId = currProfile.activeToko;
     console.log("TOKO ID: " + TokoId);
+    z;
     const addTransaction = await Transaction.create({
       TokoId,
       ProductId,
+      customer,
       notes,
       quantity,
       total,

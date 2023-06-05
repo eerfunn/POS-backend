@@ -15,6 +15,9 @@ module.exports = {
       ProductId: {
         type: Sequelize.INTEGER,
       },
+      customer: {
+        type: Sequelize.STRING,
+      },
       notes: {
         type: Sequelize.STRING,
       },
